@@ -218,18 +218,3 @@ Once configured, pushing changes to `main` automatically runs tests, builds the 
 
 ---
 
-## 6. Class Presentation Cheat Sheet (2-3 Minutes)
-
-Use this script during your presentation:
-
-> **1. Introduction (30 seconds):**
-> *"Hello everyone. For this cloud assessment, I built a containerized cloud microservice deployed on AWS using Docker, Amazon ECR, and an EC2 instance, fully orchestrated through GitHub Actions CI/CD."*
-
-> **2. Architecture & Microservice Design (45 seconds):**
-> *"The backend is implemented in FastAPI. When a client sends a request, it hits port 80 of our EC2 virtual machine, which forwards the traffic to our isolated Docker container running on port 8000. The microservice exposes a `/health` endpoint for uptime monitoring, an `/api/info` endpoint showcasing container isolation, and CRUD endpoints for data handling."*
-
-> **3. Testing & CI/CD Push-Blocking (45 seconds):**
-> *"To ensure reliability, I implemented 8 automated test cases covering health checks, CRUD operations, and error handling. Furthermore, I implemented a Git pre-push hook: whenever a developer attempts `git push`, the tests run locally; if any test fails, the push is immediately blocked. On GitHub, the Actions pipeline re-validates the test suite before building the Docker image and pushing it to Amazon ECR."*
-
-> **4. Live Demo & Conclusion (30 seconds):**
-> *"Here is the live deployment running on our EC2 instance at `http://<EC2-IP>/docs`. As you can see, the interactive Swagger documentation and health checks are live and responding in real-time."*
