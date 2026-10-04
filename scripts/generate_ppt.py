@@ -406,9 +406,11 @@ def create_deck():
         p.font.name = "Arial"
         p.space_before = Pt(8)
 
-    output_path = "/Users/Shaurya/Documents/Cloud_assessment/cloud_assessment_presentation.pptx"
-    prs.save(output_path)
-    print(f"Presentation saved successfully to: {output_path}")
+    output_path1 = "/Users/Shaurya/Documents/Cloud_assessment/cloud_assessment_presentation.pptx"
+    output_path2 = "/Users/Shaurya/Documents/Cloud_assessment/presentation.pptx"
+    prs.save(output_path1)
+    prs.save(output_path2)
+    print(f"Presentation saved successfully to:\n- {output_path1}\n- {output_path2}")
 
 if __name__ == "__main__":
     create_deck()
