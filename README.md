@@ -1,6 +1,6 @@
 # Containerized Microservice on AWS (Project 1)
 
-[![CI/CD Pipeline](https://github.com/placeholder-user/cloud-assessment-microservice/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/placeholder-user/cloud-assessment-microservice/actions)
+[![CI/CD Pipeline](https://github.com/Shauryagour/cloud-assessment-microservice/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Shauryagour/cloud-assessment-microservice/actions)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/docker-containerized-2496ED.svg)](https://www.docker.com/)
 [![AWS ECR & EC2](https://img.shields.io/badge/AWS-ECR%20%26%20EC2-FF9900.svg)](https://aws.amazon.com/)
@@ -125,8 +125,8 @@ The `.github/workflows/ci-cd.yml` workflow executes the test suite on every push
 ### Option A: Local Python Environment
 ```bash
 # 1. Clone repository
-git clone <YOUR_REPO_URL>
-cd Cloud_assessment
+git clone https://github.com/Shauryagour/cloud-assessment-microservice.git
+cd cloud-assessment-microservice
 
 # 2. Create and activate virtual environment
 python3 -m venv venv
