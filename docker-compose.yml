@@ -1,0 +1,19 @@
+services:
+  microservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cloud-assessment-microservice:latest
+    container_name: aws_cloud_microservice
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

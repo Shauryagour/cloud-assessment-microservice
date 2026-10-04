@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Git Pre-Push Hook: Blocks git push if automated test suite fails.
+# Required by Cloud Assessment specification.
+
+set -e
+
+echo "=========================================================="
+echo " [PRE-PUSH HOOK] Running automated test suite before push"
+echo "=========================================================="
+
+# Check if venv pytest exists, otherwise fallback to system pytest
+if [ -f "./venv/bin/pytest" ]; then
+    PYTEST_BIN="./venv/bin/pytest"
+elif command -v pytest >/dev/null 2>&1; then
+    PYTEST_BIN="pytest"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTEST_BIN="python3 -m pytest"
+else
+    echo "ERROR: pytest not found! Please install pytest or set up venv."
+    exit 1
+fi
+
+echo "Running tests using: $PYTEST_BIN"
+if $PYTEST_BIN -v tests/; then
+    echo "=========================================================="
+    echo " [PRE-PUSH HOOK] All tests PASSED! Proceeding with push."
+    echo "=========================================================="
+    exit 0
+else
+    echo "=========================================================="
+    echo " [PRE-PUSH HOOK] FAILED! One or more tests did not pass."
+    echo " Push aborted to prevent breaking deployed microservice."
+    echo " Please fix the failing test cases before pushing."
+    echo "=========================================================="
+    exit 1
+fi

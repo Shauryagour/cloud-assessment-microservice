@@ -1,0 +1,98 @@
+name: Microservice CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Automated Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Test Suite (Blocks deployment if failing)
+        run: |
+          pytest -v tests/
+
+  build-and-deploy:
+    name: Build Docker Image & Deploy to AWS ECR / EC2
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Check AWS Credentials Configuration
+        id: check_aws
+        run: |
+          if [ -n "${{ secrets.AWS_ACCESS_KEY_ID }}" ] && [ -n "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+            echo "aws_configured=true" >> $GITHUB_OUTPUT
+            echo "AWS credentials found in repository secrets."
+          else
+            echo "aws_configured=false" >> $GITHUB_OUTPUT
+            echo "AWS secrets not configured yet. Build simulation will run."
+          fi
+
+      - name: Build Local Docker Image (Verification)
+        run: |
+          docker build -t cloud-microservice:latest .
+          docker images
+
+      - name: Configure AWS Credentials
+        if: steps.check_aws.outputs.aws_configured == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Log in to Amazon ECR
+        if: steps.check_aws.outputs.aws_configured == 'true'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push Docker Image to Amazon ECR
+        if: steps.check_aws.outputs.aws_configured == 'true'
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ secrets.ECR_REPOSITORY || 'cloud-microservice' }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag cloud-microservice:latest $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker tag cloud-microservice:latest $REGISTRY/$REPOSITORY:latest
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:latest
+          echo "Successfully pushed $REGISTRY/$REPOSITORY:$IMAGE_TAG to AWS ECR"
+
+      - name: Deploy to EC2 via SSH
+        if: steps.check_aws.outputs.aws_configured == 'true' && secrets.EC2_HOST != ''
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER || 'ec2-user' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION || 'us-east-1' }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY || 'cloud-microservice' }}:latest
+            docker stop aws_cloud_microservice || true
+            docker rm aws_cloud_microservice || true
+            docker run -d --name aws_cloud_microservice -p 80:8000 --restart unless-stopped ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY || 'cloud-microservice' }}:latest
+            docker ps
